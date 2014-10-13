@@ -1,0 +1,3 @@
+# LCS
+
+Longest Common Subsequence
