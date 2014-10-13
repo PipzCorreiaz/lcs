@@ -3,17 +3,21 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
+#include <algorithm>
 
 typedef struct matrix_cell {
 	int value;
 	char letter;
+	int i;
+	int j;
 	struct matrix_cell* parent;
 } cell;
 
 void print_matrix(cell** matrix, int size1, int size2) {
 	for (int i = 0; i < size1 + 1; i++) {
 		for (int j = 0; j < size2 + 1; j++) {
-			std::cout << matrix[i][j].value;
+			//std::cout << matrix[i][j].value;
+			std::cout << "(" << matrix[i][j].i << "," << matrix[i][j].j << ")";
 		}
 
 		std::cout << std::endl;
@@ -72,8 +76,8 @@ int main(int argc, char const *argv[]) {
 				current_cell->letter = xi;
 				current_cell->parent = parent;
 			} else {
-				cell* top_cell = &matrix[i][j - 1];
-				cell* left_cell = &matrix[i - 1][j];
+				cell* top_cell = &matrix[i - 1][j];
+				cell* left_cell = &matrix[i][j - 1];
 
 				if (top_cell->value > left_cell->value) {
 					current_cell->parent = top_cell;
@@ -85,17 +89,31 @@ int main(int argc, char const *argv[]) {
 
 				current_cell->letter = '\0';
 			}
+
+			current_cell->i = i;
+			current_cell->j = j;
 		}
 	}
 
-	print_matrix(matrix, seq1_size, seq2_size);
 
-	// cell* last_cell = matrix[seq1_size][seq2_size];
-	// std::string lcs = "";
+	cell* last_cell = &matrix[seq1_size][seq2_size];
+	int len = last_cell->value;
+	char lcs[len + 1];
+	char letter;
+	int pos;
 
-	// while (last_cell == NULL) {
+	lcs[len] = '\0';
 
-	// }
+	while (last_cell != NULL) {
+		pos = last_cell->value - 1;
+		letter = last_cell->letter;		
+		if (letter != '\0') {
+			lcs[pos] = letter;
+		}
+		last_cell = last_cell->parent;
+	}
+
+	std::cout << len << std::endl << lcs << std::endl;
 	
 	return 0;
 }
