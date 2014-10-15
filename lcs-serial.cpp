@@ -46,12 +46,10 @@ int main(int argc, char const *argv[]) {
 
 	file.open(argv[1]);
 	if (file.is_open()) {
-		file >> seq1_size;
-		file >> seq2_size;
-		file >> seq1;
-		file >> seq2;
+		file >> seq1_size >> seq2_size >> seq1 >> seq2;
 	} else {
-		std::cout << "Unable to open file"; 
+		std::cout << "Unable to open file";
+		exit(-1);
 	}
 
 	file.close();
@@ -63,12 +61,13 @@ int main(int argc, char const *argv[]) {
 		matrix[i] = (cell*)calloc(seq2_size + 1, sizeof(cell));
 	}
 
+	cell* current_cell;
 
 	for (int i = 1; i < seq1_size + 1; i++) {
 		for (int j = 1; j < seq2_size + 1; j++) {
 			char xi = seq1[i - 1];
 			char yj = seq2[j - 1];
-			cell* current_cell = &matrix[i][j];
+			current_cell = &matrix[i][j];
 
 			if (xi == yj) {
 				cell* parent = &matrix[i - 1][j - 1];
@@ -95,7 +94,7 @@ int main(int argc, char const *argv[]) {
 		}
 	}
 
-
+	current_cell = NULL;
 	cell* last_cell = &matrix[seq1_size][seq2_size];
 	int len = last_cell->value;
 	char lcs[len + 1];
@@ -115,5 +114,19 @@ int main(int argc, char const *argv[]) {
 
 	std::cout << len << std::endl << lcs << std::endl;
 	
+	
+	for (int i = 0; i < seq1_size + 1; i++) {
+	    for (int j = 0; j < seq2_size; j++) {
+	      matrix[i][j].parent = NULL;
+	    }
+	    
+	    free(matrix[i]);
+	}
+	
+	free(matrix);
+	free(current_cell);
+	free(last_cell);
+	
+
 	return 0;
 }
