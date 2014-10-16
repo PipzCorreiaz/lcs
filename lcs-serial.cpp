@@ -8,16 +8,13 @@
 typedef struct matrix_cell {
 	int value;
 	char letter;
-	int i;
-	int j;
 	struct matrix_cell* parent;
 } cell;
 
 void print_matrix(cell** matrix, int size1, int size2) {
 	for (int i = 0; i < size1 + 1; i++) {
 		for (int j = 0; j < size2 + 1; j++) {
-			//std::cout << matrix[i][j].value;
-			std::cout << "(" << matrix[i][j].i << "," << matrix[i][j].j << ")";
+			std::cout << matrix[i][j].value;
 		}
 
 		std::cout << std::endl;
@@ -88,9 +85,6 @@ int main(int argc, char const *argv[]) {
 
 				current_cell->letter = '\0';
 			}
-
-			current_cell->i = i;
-			current_cell->j = j;
 		}
 	}
 
