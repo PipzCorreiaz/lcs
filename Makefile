@@ -1,16 +1,17 @@
-CC=g++
-CFLAGS=-ansi -Wall -o
+CC=gcc
+CFLAGS=-ansi -Wall -lm -g -o
+OMPFLAGS=-fopenmp
 
 all: serial omp mpi
 
 serial:
-	$(CC) $(CFLAGS) lcs-serial lcs-serial.cpp
+	$(CC) $(CFLAGS) lcs-serial lcs-serial.c
 
 omp:
-	$(CC) $(CFLAGS) lcs-omp lcs-omp.cpp
+	$(CC) $(OMPFLAGS) $(CFLAGS) lcs-omp lcs-omp.c
 
 mpi:
-	$(CC) $(CFLAGS) lcs-mpi lcs-mpi.cpp
+	$(CC) $(CFLAGS) lcs-mpi lcs-mpi.c
 
 clean:
 	rm -rf *.o lcs-serial lcs-omp lcs-mpi
