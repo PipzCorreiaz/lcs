@@ -70,7 +70,7 @@ int main(int argc, char const *argv[]) {
 
     fclose(file);
 
-	matrix = (cell*) malloc((seq1_size + 1) * (seq2_size + 1) * sizeof(cell));
+	matrix = (cell*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(cell));
 
 	cell *current_cell;
 	cell *parent;
