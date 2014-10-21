@@ -9,24 +9,12 @@ typedef struct matrix_cell {
 	struct matrix_cell* parent;
 } cell;
 
-void print_matrix(cell** matrix, int size1, int size2) {
-    int i, j;
-	for (i = 0; i < size1 + 1; i++) {
-		for (j = 0; j < size2 + 1; j++) {
-			printf("%d", matrix[i][j].value);
-		}
-
-        printf("\n");
-	}
-}
-
-void print_new_matrix(cell* matrix, int size1, int size2) {
+void print_new_matrix(int* matrix, int size1, int size2) {
     int i, j;
     for (i = 0; i < size1 + 1; i++) {
         for (j = 0; j < size2 + 1; j++) {
-            cell* c = &matrix[i * (size1 + 1) + j];
-            printf("%d", c->value);
-            c = NULL;
+            int c = matrix[i * (size2 + 1) + j];
+            printf("%d", c);
         }
 
         printf("\n");
@@ -52,7 +40,7 @@ int main(int argc, char const *argv[]) {
 	char *seq1, *seq2;
 	int seq2_size = 0;
 
-	cell *matrix;
+	int *matrix;
 
     file = fopen(argv[1], "r");
 	if (file != NULL) {		
@@ -70,12 +58,11 @@ int main(int argc, char const *argv[]) {
 
     fclose(file);
 
-	matrix = (cell*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(cell));
+	matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
 
-	cell *current_cell;
-	cell *parent;
-	cell *top_cell;
-	cell *left_cell;
+	int *current_cell;
+	int left_cell;
+	int top_cell;
 
     int i, j;
     int gap = seq2_size + 1;
@@ -90,64 +77,55 @@ int main(int argc, char const *argv[]) {
 			char xi = seq1[i - 1];
 			char yj = seq2[j - 1];
             current_cell = &matrix[i * gap + j];
-			/* current_cell = &matrix[i][j]; */
 
 			if (xi != yj) {
-                top_cell = &matrix[(i - 1) * gap + j];
-                left_cell = &matrix[i * gap + (j - 1)];
-				/* top_cell = &matrix[i - 1][j];
-				left_cell = &matrix[i][j - 1]; */
+                top_cell = matrix[(i - 1) * gap + j];
+                left_cell = matrix[i * gap + (j - 1)];
 
-				if (top_cell->value > left_cell->value) {
-					current_cell->parent = top_cell;
-					current_cell->value = top_cell->value;
+				if (top_cell > left_cell) {
+					*current_cell = top_cell;
 				} else {
-					current_cell->parent = left_cell;
-					current_cell->value = left_cell->value;
+					*current_cell = left_cell;
 				}
 
-				/*current_cell->letter = '\0';*/
 			} else {
-				/* parent = &matrix[i - 1][j - 1]; */
-                parent = &matrix[(i - 1) * gap + (j - 1)];
-				current_cell->value = parent->value + cost(i);
-				current_cell->letter = xi;
-				current_cell->parent = parent;
+                *current_cell = matrix[(i - 1) * gap + (j - 1)] + cost(i);
 			}
 		}
 	}
 
 	current_cell = NULL;
-	parent = NULL;
-	top_cell = NULL;
-	left_cell = NULL;
 
-	/* cell* last_cell = &matrix[seq1_size][seq2_size]; */
-    cell *last_cell = &matrix[seq1_size * gap + seq2_size];
-	int len = last_cell->value;
+	i = seq1_size;
+	j = seq2_size;
+	char xi, yj;
+	int last_cell = matrix[i * gap + j];
+	int len = last_cell;
 	char lcs[len + 1];
-	char letter;
-	int pos;
-
 	lcs[len] = '\0';
-
-	while (last_cell != NULL) {
-		pos = last_cell->value - 1;
-		letter = last_cell->letter;
-		if (letter != '\0') {
-			lcs[pos] = letter;
+	
+	while(last_cell > 0) {
+		xi = seq1[i-1];
+		yj = seq2[j-1];
+		if(xi == yj) {
+			lcs[last_cell-1] = xi;
+			i--;
+			j--;
 		}
-		last_cell = last_cell->parent;
+		else {
+			if(matrix[(i-1) * gap + j] > matrix[i * gap + (j - 1)]) {
+				i--;
+			}
+			else {
+				j--;
+			}
+		}
+		last_cell = matrix[i * gap + j];
 	}
-
-    printf("%d\n%s\n", len, lcs);
-
-
-	for (i = 0; i < seq1_size + 1; i++) {
-	    for (j = 0; j < seq2_size + 1; j++) {
-	      matrix[i * gap + j].parent = NULL;
-	    }
-	}
+	
+	printf("%d\n%s\n", len, lcs);
+			
+	
 
 	free(matrix);
 	free(seq1);
