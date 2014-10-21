@@ -109,6 +109,7 @@ int main(int argc, char const *argv[]) {
 		yj = seq2[j-1];
 		if(xi == yj) {
 			lcs[last_cell-1] = xi;
+			last_cell--;
 			i--;
 			j--;
 		}
@@ -120,7 +121,6 @@ int main(int argc, char const *argv[]) {
 				j--;
 			}
 		}
-		last_cell = matrix[i * gap + j];
 	}
 	
 	printf("%d\n%s\n", len, lcs);
