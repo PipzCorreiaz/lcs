@@ -4,12 +4,6 @@
 
 #define ALPHA_SIZE 4
 
-typedef struct matrix_cell {
-	int value;
-	char letter;
-	struct matrix_cell* parent;
-} cell;
-
 void print_new_matrix(int* matrix, int size1, int size2) {
     int i, j;
     for (i = 0; i < size1 + 1; i++) {
@@ -20,6 +14,17 @@ void print_new_matrix(int* matrix, int size1, int size2) {
 
         printf("\n");
     }
+}
+
+int letter_index(char alpha[4], char letter) {
+    int i;
+    for (i = 0; i < ALPHA_SIZE; i++) {
+        if (alpha[i] == letter) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 short cost(int x) {
@@ -41,7 +46,7 @@ int main(int argc, char const *argv[]) {
 	int seq2_size = 0;
 
     file = fopen(argv[1], "r");
-	if (file != NULL) {		
+	if (file != NULL) {
         fscanf(file, "%d %d", &seq1_size, &seq2_size);
 
 		seq1 = (char *) calloc(seq1_size + 1, sizeof(char));
@@ -73,7 +78,7 @@ int main(int argc, char const *argv[]) {
 
     /* Compute P table */
     for (i = 0; i < ALPHA_SIZE; i++) {
-    	int index = i * (seq2_size + 1);
+    	int index = i * gap;
     	char c = C[i];
     	for (j = 0; j < seq2_size + 1; j++) {
     		char b = (j - 2) < 0 ? '#' : seq2[j - 2];
@@ -84,68 +89,67 @@ int main(int argc, char const *argv[]) {
     		} else if (b == c) {
     			P[index + j] = j - 1;
     		} else {
-				P[index + j] = P[index + j - 1];			
+				P[index + j] = P[index + j - 1];
     		}
 
-    		printf("%d ", P[index + j]);
+    		/*printf("%d ", P[index + j]);*/
 
     	}
 
-    	printf("\n");
+    	/*printf("\n");*/
 
     }
 
 	for (i = 1; i < seq1_size + 1; i++) {
 		int index = i * gap;
 		for (j = 1; j < seq2_size + 1; j++) {
-			index++;
 			char xi = seq1[i - 1];
-			char yj = seq2[j - 1];
+			/*char yj = seq2[j - 1];*/
+            int l_value = letter_index(C, xi);
+            int p_value = P[l_value * gap + j];
 
-			if (xi != yj) {
-                int top_cell = matrix[index - gap];
-                int left_cell = matrix[index - 1];
+            if (p_value == 0) {
+                matrix[index + j] = matrix[index - gap + j];
+            } else {
+                int top_cell = matrix[index - gap + j];
+                int other_cell = matrix[index - gap + p_value] + 1;
 
-				if (top_cell > left_cell) {
-					matrix[index] = top_cell;
-				} else {
-					matrix[index] = left_cell;
-				}
+                if (top_cell > other_cell) {
+                    matrix[index + j] = top_cell;
+                } else {
+                    matrix[index + j] = other_cell;
+                }
+            }
 
-			} else {
-                matrix[index] = matrix[index - gap - 1] + cost(i);
-			}
 		}
 	}
 
+/*    print_new_matrix(matrix, seq1_size, seq2_size);
+
 	i = seq1_size;
 	j = seq2_size;
-	char xi, yj;
+	char xi;
 	int last_cell = matrix[i * gap + j];
 	int len = last_cell;
 	char lcs[len + 1];
 	lcs[len] = '\0';
-	
+
 	while(last_cell > 0) {
 		int index = i * gap + j;
 		xi = seq1[i - 1];
-		yj = seq2[j - 1];
-		if(xi == yj) {
-			lcs[last_cell - 1] = xi;
-			last_cell--;
-			i--;
-			j--;
-		}
-		else if(matrix[index - gap] > matrix[index - 1]) {
-			i--;
-		}
-		else {
-			j--;
-		}
+        int next_cell = matrix[index - gap];
+		if (next_cell < last_cell) {
+            lcs[last_cell - 1] = xi;
+        }
+
+        last_cell = next_cell;
+        i--;
+        j--;
 	}
-	
+
 	printf("%d\n%s\n", len, lcs);
-			
+*/
+    printf("%d\n", matrix[seq1_size * gap + seq2_size]);
 	free(matrix);
 	free(seq1);
 	free(seq2);
