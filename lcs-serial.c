@@ -136,7 +136,7 @@ int main(int argc, char const *argv[]) {
             i--;
             j--;
         } else {
-            int main = matrix[index];
+            int current = matrix[index];
             int top = matrix[index - gap];
             int left = matrix[index - 1];
             int right_of_top = matrix[index - gap + 1];
@@ -144,7 +144,7 @@ int main(int argc, char const *argv[]) {
             if (right_of_top > top) {
                 top++;
             } 
-            if (main > left) {
+            if (current > left) {
                 left++;
             } 
 
