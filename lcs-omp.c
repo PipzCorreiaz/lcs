@@ -83,7 +83,6 @@ int main(int argc, char const *argv[]) {
     	char c = C[i];
     	for (j = 0; j < seq2_size + 1; j++) {
     		char b = (j - 2) < 0 ? '#' : seq2[j - 2];
-    		/*printf("(%c, %c) ", c, b);*/
 
     		if (j == 0) {
     			P[index + j] = j;
@@ -92,13 +91,7 @@ int main(int argc, char const *argv[]) {
     		} else {
 				P[index + j] = P[index + j - 1];
     		}
-
-    		/*printf("%d ", P[index + j]);*/
-
     	}
-
-    	/*printf("\n");*/
-
     }
 
 	for (i = 1; i < seq1_size + 1; i++) {
@@ -106,7 +99,6 @@ int main(int argc, char const *argv[]) {
         #pragma omp parallel for
 		for (j = 1; j < seq2_size + 1; j++) {
 			char xi = seq1[i - 1];
-			/*char yj = seq2[j - 1];*/
             int l_value = letter_index(C, xi);
             int p_value = P[l_value * gap + j];
 
@@ -126,35 +118,51 @@ int main(int argc, char const *argv[]) {
 		}
 	}
 
-/*    print_new_matrix(matrix, seq1_size, seq2_size);
 
-	i = seq1_size;
-	j = seq2_size;
-	char xi;
-	int last_cell = matrix[i * gap + j];
-	int len = last_cell;
-	char lcs[len + 1];
-	lcs[len] = '\0';
+    i = seq1_size;
+    j = seq2_size;
+    char xi, yj;
+    int last_cell = matrix[i * gap + j];
+    int len = last_cell;
+    char lcs[len + 1];
+    lcs[len] = '\0';
 
-	while(last_cell > 0) {
-		int index = i * gap + j;
-		xi = seq1[i - 1];
-        int next_cell = matrix[index - gap];
-		if (next_cell < last_cell) {
-            lcs[last_cell - 1] = xi;
+    while(i > 0 && j > 0) {
+        int index = i * gap + j;
+        xi = seq1[i - 1];
+        yj = seq2[j - 1];
+
+        if (xi == yj) {
+            last_cell--;
+            lcs[last_cell] = xi;
+            i--;
+            j--;
+        } else {
+            int current = matrix[index];
+            int top = matrix[index - gap];
+            int left = matrix[index - 1];
+            int right_of_top = matrix[index - gap + 1];
+
+            if (right_of_top > top) {
+                top++;
+            } 
+            if (current > left) {
+                left++;
+            } 
+
+            if (left >= top) {
+                j--;
+            } else {
+                i--;
+            }
         }
+    }
 
-        last_cell = next_cell;
-        i--;
-        j--;
-	}
+    printf("%d\n%s\n", len, lcs);
 
-	printf("%d\n%s\n", len, lcs);
-*/
-    printf("%d\n", matrix[seq1_size * gap + seq2_size]);
-	free(matrix);
-	free(seq1);
-	free(seq2);
+    free(matrix);
+    free(seq1);
+    free(seq2);
 
 
 	return 0;
