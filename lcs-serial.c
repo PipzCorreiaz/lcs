@@ -60,10 +60,6 @@ int main(int argc, char const *argv[]) {
 
 	matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
 
-	int *current_cell;
-	int left_cell;
-	int top_cell;
-
     int i, j;
     int gap = seq2_size + 1;
 
@@ -72,29 +68,37 @@ int main(int argc, char const *argv[]) {
     	exit(-1);
     }
 
-	for (i = 1; i < seq1_size + 1; i++) {
-		for (j = 1; j < seq2_size + 1; j++) {
-			char xi = seq1[i - 1];
-			char yj = seq2[j - 1];
-            current_cell = &matrix[i * gap + j];
+	for (i = 1, j=1; j < seq2_size + 1 && i < seq1_size + 1; ) {
+	  int z, w;
+	  for (z = i, w = j; z > 0 && w < seq2_size + 1; z--, w++) {
+	    int index = z * gap + w;
+	    char xi = seq1[z - 1];
+	    char yj = seq2[w - 1];
 
-			if (xi != yj) {
-                top_cell = matrix[(i - 1) * gap + j];
-                left_cell = matrix[i * gap + (j - 1)];
+	    if (xi != yj) {
+	      int top_cell = matrix[index - gap];
+	      int left_cell = matrix[index - 1];
 
-				if (top_cell > left_cell) {
-					*current_cell = top_cell;
-				} else {
-					*current_cell = left_cell;
-				}
+	      if (top_cell > left_cell) {
+		      matrix[index] = top_cell;
+	      } else {
+		      matrix[index] = left_cell;
+	      }
 
-			} else {
-                *current_cell = matrix[(i - 1) * gap + (j - 1)] + cost(i);
-			}
-		}
+	    } else {
+		    matrix[index] = matrix[index - gap - 1] + cost(z);
+	    }
+	  }
+	  if(i < seq1_size) {
+	    i++;
+	  }
+	  else {
+	    j++;
+	  }
+	    
 	}
-
-	current_cell = NULL;
+	
+	
 
 	i = seq1_size;
 	j = seq2_size;
