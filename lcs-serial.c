@@ -84,7 +84,7 @@ int main(int argc, char const *argv[]) {
             char b = (j - 2) < 0 ? '#' : seq2[j - 2];
 
             if (j == 0) {
-                P[index + j] = j;
+                P[index] = 0;
             } else if (b == c) {
                 P[index + j] = j - 1;
             } else {
