@@ -10,15 +10,15 @@ typedef struct matrix_cell {
 } cell;
 
 void print_new_matrix(int* matrix, int size1, int size2) {
-    int i, j;
-    for (i = 0; i < size1 + 1; i++) {
-        for (j = 0; j < size2 + 1; j++) {
-            int c = matrix[i * (size2 + 1) + j];
-            printf("%d", c);
-        }
+	int i, j;
+	for (i = 0; i < size1 + 1; i++) {
+		for (j = 0; j < size2 + 1; j++) {
+			int c = matrix[i * (size2 + 1) + j];
+			printf("%d", c);
+		}
 
-        printf("\n");
-    }
+		printf("\n");
+	}
 }
 
 
@@ -34,7 +34,7 @@ short cost(int x) {
 
 
 int main(int argc, char const *argv[]) {
-    FILE *file;
+	FILE *file;
 
 	int seq1_size = 0;
 	char *seq1, *seq2;
@@ -42,63 +42,74 @@ int main(int argc, char const *argv[]) {
 
 	int *matrix;
 
-    file = fopen(argv[1], "r");
+	file = fopen(argv[1], "r");
 	if (file != NULL) {		
-        fscanf(file, "%d %d", &seq1_size, &seq2_size);
+		fscanf(file, "%d %d", &seq1_size, &seq2_size);
 
 		seq1 = (char *) calloc(seq1_size + 1, sizeof(char));
 		seq2 = (char *) calloc(seq2_size + 1, sizeof(char));
 
-        fscanf(file, "%s %s", seq1, seq2);
+		fscanf(file, "%s %s", seq1, seq2);
 
 	} else {
 		printf("%s\n", "Unable to open file");
 		exit(-1);
 	}
 
-    fclose(file);
+	fclose(file);
 
 	matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
-
-    int i, j;
-    int gap = seq2_size + 1;
-
-    if (matrix == NULL) {
-    	printf("Not enough memory. Learning how to program in C might help...\n");
-    	exit(-1);
-    }
-
-	for (i = 1, j=1; j < seq2_size + 1 && i < seq1_size + 1; ) {
-	  int z, w;
-	  for (z = i, w = j; z > 0 && w < seq2_size + 1; z--, w++) {
-	    int index = z * gap + w;
-	    char xi = seq1[z - 1];
-	    char yj = seq2[w - 1];
-
-	    if (xi != yj) {
-	      int top_cell = matrix[index - gap];
-	      int left_cell = matrix[index - 1];
-
-	      if (top_cell > left_cell) {
-		      matrix[index] = top_cell;
-	      } else {
-		      matrix[index] = left_cell;
-	      }
-
-	    } else {
-		    matrix[index] = matrix[index - gap - 1] + cost(z);
-	    }
-	  }
-	  if(i < seq1_size) {
-	    i++;
-	  }
-	  else {
-	    j++;
-	  }
-	    
+	if (matrix == NULL) {
+		printf("Not enough memory. Learning how to program in C might help...\n");
+		exit(-1);
 	}
-	
-	
+
+	int i, j;
+	const int gap = seq2_size + 1;
+	const int max_diagonals = abs(seq1_size - seq2_size) + 1;
+	const int shortest_seq_size = seq1_size < seq2_size? seq1_size : seq2_size;
+
+
+	int k, max_j = 0, diagonals_counter = max_diagonals;
+	for (i = 1, k = 1; i < seq1_size + 1 && k < seq2_size + 1; ) {
+		if (i < shortest_seq_size) {
+			max_j = i;
+		} else {
+			if (diagonals_counter > 0) {
+				max_j = shortest_seq_size;
+				diagonals_counter--;
+			} else {
+				max_j--;
+			}
+		}
+
+		for (j = k; j < max_j + k; j++) {
+			int u = (i - j + k);
+			int index = u * gap + j;
+			char xi = seq1[u - 1];
+			char yj = seq2[j - 1];
+
+			if (xi != yj) {
+				int top_cell = matrix[index - gap];
+				int left_cell = matrix[index - 1];
+
+				if (top_cell > left_cell) {
+					matrix[index] = top_cell;
+				} else {
+					matrix[index] = left_cell;
+				}
+
+			} else {
+				matrix[index] = matrix[index - gap - 1] + cost(i);
+			}
+		}
+
+		if (i < seq1_size) {
+			i++;
+		} else {
+			k++;
+		}
+	}
 
 	i = seq1_size;
 	j = seq2_size;
@@ -128,7 +139,7 @@ int main(int argc, char const *argv[]) {
 	}
 	
 	printf("%d\n%s\n", len, lcs);
-			
+
 	
 
 	free(matrix);

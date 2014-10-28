@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <semaphore.h>
+#include <omp.h>
 
 void print_new_matrix(int* matrix, int size1, int size2) {
 	int i, j;
@@ -58,79 +59,77 @@ int main(int argc, char const *argv[]) {
 		exit(-1);
 	}
 
-
 	int i, j;
 	int gap = seq2_size + 1;
+	const int max_diagonals = abs(seq1_size - seq2_size) + 1;
+	const int shortest_seq_size = seq1_size < seq2_size? seq1_size : seq2_size;
 
-	sem_t* semaphores = (sem_t*) calloc((seq1_size + 1), sizeof(sem_t));
-	sem_init(&semaphores[0], 0, seq2_size);
-	
-	#pragma omp parallel
-	{
+	int k, max_j = 0, diagonals_counter = max_diagonals;
+	for (i = 1, k = 1; i < seq1_size + 1 && k < seq2_size + 1; ) {
+		if (i < shortest_seq_size) {
+			max_j = i;
+		} else {
+			if (diagonals_counter > 0) {
+				max_j = shortest_seq_size;
+				diagonals_counter--;
+			} else {
+				max_j--;
+			}
+		}
+		#pragma omp parallel for
+		for (j = k; j < max_j + k; j++) {
+			int u = (i - j + k);
+			int index = u * gap + j;
+			char xi = seq1[u - 1];
+			char yj = seq2[j - 1];
 
-		#pragma omp for private(j) schedule(static, 1)
-		for (i = 1; i < seq1_size + 1; i++) {
-			int index = i * gap;
-			char xi = seq1[i - 1];
-			for (j = 1; j < seq2_size + 1; j++) {
-				index++;
-				char yj = seq2[j - 1];
+			if (xi != yj) {
+				int top_cell = matrix[index - gap];
+				int left_cell = matrix[index - 1];
 
-				if (xi != yj) {
-					sem_wait(&semaphores[i - 1]);
-					int top_cell = matrix[index - gap];
-					int left_cell = matrix[index - 1];
-
-					if (top_cell > left_cell) {
-						matrix[index] = top_cell;
-						sem_post(&semaphores[i]);
-					} else {
-						matrix[index] = left_cell;
-						sem_post(&semaphores[i]);
-					}
-
+				if (top_cell > left_cell) {
+					matrix[index] = top_cell;
 				} else {
-					sem_wait(&semaphores[i - 1]);
-					matrix[index] = matrix[index - gap - 1] + cost(i);
-					sem_post(&semaphores[i]);
+					matrix[index] = left_cell;
 				}
+
+			} else {
+				matrix[index] = matrix[index - gap - 1] + cost(i);
 			}
 		}
 
-		#pragma omp for nowait
-		for (i = 0; i < seq1_size + 1; i++) {
-			sem_destroy(&semaphores[i]);
-		}
-
-		#pragma omp single
-		{
-			i = seq1_size;
-			j = seq2_size;
-			char xi, yj;
-			int last_cell = matrix[i * gap + j];
-			int len = last_cell;
-			char lcs[len + 1];
-			lcs[len] = '\0';
-			
-			while(last_cell > 0) {
-				int index = i * gap + j;
-				xi = seq1[i - 1];
-				yj = seq2[j - 1];
-				if (xi == yj) {
-					lcs[last_cell - 1] = xi;
-					last_cell--;
-					i--;
-					j--;
-				} else if (matrix[index - gap] > matrix[index - 1]) {
-					i--;
-				} else {
-					j--;
-				}
-			}
-			
-			printf("%d\n%s\n", len, lcs);
+		if (i < seq1_size) {
+			i++;
+		} else {
+			k++;
 		}
 	}
+
+	i = seq1_size;
+	j = seq2_size;
+	char xi, yj;
+	int last_cell = matrix[i * gap + j];
+	int len = last_cell;
+	char lcs[len + 1];
+	lcs[len] = '\0';
+
+	while(last_cell > 0) {
+		int index = i * gap + j;
+		xi = seq1[i - 1];
+		yj = seq2[j - 1];
+		if (xi == yj) {
+			lcs[last_cell - 1] = xi;
+			last_cell--;
+			i--;
+			j--;
+		} else if (matrix[index - gap] > matrix[index - 1]) {
+			i--;
+		} else {
+			j--;
+		}
+	}
+
+	printf("%d\n%s\n", len, lcs);
 	
 
 	free(matrix);
