@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 
 typedef struct matrix_cell {
@@ -41,6 +42,8 @@ int main(int argc, char const *argv[]) {
 	int seq2_size = 0;
 
 	int *matrix;
+	clock_t start_t, end_t;
+	double total_t;
 
 	file = fopen(argv[1], "r");
 	if (file != NULL) {		
@@ -57,7 +60,7 @@ int main(int argc, char const *argv[]) {
 	}
 
 	fclose(file);
-
+	
 	matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
 	if (matrix == NULL) {
 		printf("Not enough memory. Learning how to program in C might help...\n");
@@ -69,7 +72,8 @@ int main(int argc, char const *argv[]) {
 	const int max_diagonals = abs(seq1_size - seq2_size) + 1;
 	const int shortest_seq_size = seq1_size < seq2_size? seq1_size : seq2_size;
 
-
+	start_t = clock();
+	
 	int k, max_j = 0, diagonals_counter = max_diagonals;
 	for (i = 1, k = 1; i < seq1_size + 1 && k < seq2_size + 1; ) {
 		if (i < shortest_seq_size) {
@@ -138,14 +142,15 @@ int main(int argc, char const *argv[]) {
 		}
 	}
 	
-	printf("%d\n%s\n", len, lcs);
-
+	end_t = clock();
+	total_t = (double) (end_t - start_t) / CLOCKS_PER_SEC;
+	printf("TOTAL SERIAL: %f\n", total_t);
 	
-
+	printf("%d\n%s\n", len, lcs);
+	
 	free(matrix);
 	free(seq1);
 	free(seq2);
-
 
 	return 0;
 }

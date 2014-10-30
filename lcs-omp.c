@@ -3,6 +3,7 @@
 #include <math.h>
 #include <semaphore.h>
 #include <omp.h>
+#include <time.h>
 
 void print_new_matrix(int* matrix, int size1, int size2) {
 	int i, j;
@@ -64,6 +65,8 @@ int main(int argc, char const *argv[]) {
 	const int max_diagonals = abs(seq1_size - seq2_size) + 1;
 	const int shortest_seq_size = seq1_size < seq2_size? seq1_size : seq2_size;
 
+	double start, end; start = omp_get_wtime();
+	
 	int k, max_j = 0, diagonals_counter = max_diagonals;
 	for (i = 1, k = 1; i < seq1_size + 1 && k < seq2_size + 1; ) {
 		if (i < shortest_seq_size) {
@@ -128,13 +131,17 @@ int main(int argc, char const *argv[]) {
 			j--;
 		}
 	}
+	
+	end = omp_get_wtime();
+    printf("TOTAL PARALLEL: %f\n", end - start);
 
 	printf("%d\n%s\n", len, lcs);
 	
-
 	free(matrix);
 	free(seq1);
 	free(seq2);
+	
+
 
 	return 0;
 }
