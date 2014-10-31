@@ -1,3 +1,5 @@
 result.out
 lcs-serial
+lcs-omp
+lcs-mpi
 core

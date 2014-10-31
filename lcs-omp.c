@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
                 max_j--;
             }
         }
-
+        #pragma omp parallel for if(max_j + k > 2)
         for (j = k; j < max_j + k; j++) {
             int u = (i - j + k);
             int index = u * gap + j;
