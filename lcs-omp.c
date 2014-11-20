@@ -102,22 +102,13 @@ int main(int argc, char const *argv[]) {
             int l_value = letter_index(C, xi);
             int p_value = P[l_value * gap + j];
 
-            if (p_value == 0) {
-                matrix[index + j] = matrix[index - gap + j];
-            } else {
-                int top_cell = matrix[index - gap + j];
-                int other_cell = matrix[index - gap + p_value] + 1;
+            int t = (0 - p_value) < 0? 1 : 0;
+            int s = (0 - (matrix[index - gap + j] - t * matrix[index - gap + p_value - 1])) < 0? 1 : 0;
 
-                if (top_cell > other_cell) {
-                    matrix[index + j] = top_cell;
-                } else {
-                    matrix[index + j] = other_cell;
-                }
-            }
+            matrix[index + j] = matrix[index - gap + j] + t * (s ^ cost(i));
 
 		}
 	}
-
 
     i = seq1_size;
     j = seq2_size;
