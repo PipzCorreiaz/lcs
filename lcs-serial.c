@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
 
     fclose(file);
 
-    char C[ALPHA_SIZE] = { 'A', 'T', 'C', 'G' };
+    char C[ALPHA_SIZE] = { 'A', 'C', 'G', 'T' };
     int *P;
 
     P = (int *) calloc(ALPHA_SIZE * (seq2_size + 1), sizeof(int));
@@ -80,12 +80,9 @@ int main(int argc, char const *argv[]) {
     for (i = 0; i < ALPHA_SIZE; i++) {
         int index = i * gap;
         char c = C[i];
-        for (j = 0; j < seq2_size + 1; j++) {
-            char b = (j - 2) < 0 ? '#' : seq2[j - 2];
-
-            if (j == 0) {
-                P[index] = 0;
-            } else if (b == c) {
+        for (j = 1; j < seq2_size + 1; j++) {
+            char b = seq2[j - 1];
+            if (b == c) {
                 P[index + j] = j;
             } else {
                 P[index + j] = P[index + j - 1];
@@ -93,18 +90,19 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-
     for (i = 1; i < seq1_size + 1; i++) {
         int index = i * gap;
         for (j = 1; j < seq2_size + 1; j++) {
             char xi = seq1[i - 1];
+            char yj = seq2[i - 1];
             int l_value = letter_index(C, xi);
             int p_value = P[l_value * gap + j];
 
             int t = (0 - p_value) < 0? 1 : 0;
             int s = (0 - (matrix[index - gap + j] - t * matrix[index - gap + p_value - 1])) < 0? 1 : 0;
 
-            matrix[index + j] = matrix[index - gap + j] + t * (s ^ cost(i));
+            if (xi == yj) cost(i);
+            matrix[index + j] = matrix[index - gap + j] + t * (s ^ 1);
         }
     }
 
@@ -116,34 +114,19 @@ int main(int argc, char const *argv[]) {
     char lcs[len + 1];
     lcs[len] = '\0';
 
-    while(i > 0 && j > 0) {
+    while(last_cell > 0) {
         int index = i * gap + j;
         xi = seq1[i - 1];
         yj = seq2[j - 1];
-
         if (xi == yj) {
+            lcs[last_cell - 1] = xi;
             last_cell--;
-            lcs[last_cell] = xi;
             i--;
             j--;
+        } else if (matrix[index - gap] > matrix[index - 1]) {
+            i--;
         } else {
-            int current = matrix[index];
-            int top = matrix[index - gap];
-            int left = matrix[index - 1];
-            int right_of_top = matrix[index - gap + 1];
-
-            if (right_of_top > top) {
-                top++;
-            } 
-            if (current > left) {
-                left++;
-            } 
-
-            if (left >= top) {
-                j--;
-            } else {
-                i--;
-            }
+            j--;
         }
     }
 
