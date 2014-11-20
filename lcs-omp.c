@@ -87,7 +87,7 @@ int main(int argc, char const *argv[]) {
     		if (j == 0) {
     			P[index] = 0;
     		} else if (b == c) {
-    			P[index + j] = j - 1;
+    			P[index + j] = j;
     		} else {
 				P[index + j] = P[index + j - 1];
     		}
@@ -136,10 +136,10 @@ int main(int argc, char const *argv[]) {
 
             if (right_of_top > top) {
                 top++;
-            } 
+            }
             if (current > left) {
                 left++;
-            } 
+            }
 
             if (left >= top) {
                 j--;
