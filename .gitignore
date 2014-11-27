@@ -3,3 +3,4 @@ lcs-serial
 lcs-omp
 lcs-mpi
 core
+hosts.txt

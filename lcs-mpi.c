@@ -44,6 +44,31 @@ short cost(int x) {
     return (short) (dcost / n_iter + 0.1);
 }
 
+int block_width(int strlen) {
+    return 500;
+}
+
+int blocks_per_proc(int strlen, int block_width) {
+    float x = strlen / (block_width * 1.0);
+    int res = x;
+
+    if (x - res > 0.5) {
+        res++;
+    }
+    return res;
+}
+
+int last_block_size(int strlen, int block_width) {
+    float x = strlen / (block_width * 1.0);
+    int res = x;
+
+    if (x - res > 0.5) {
+        return strlen - (block_width * res);
+    } else {
+        return block_width + (strlen - (block_width * res));
+    }
+}
+
 
 int main(int argc, char *argv[]) {
     int me, nprocs;
@@ -91,6 +116,9 @@ int main(int argc, char *argv[]) {
     int buffer_max_size = ALPHA_SIZE / nprocs + 1;
     int *block = (int*) calloc(buffer_max_size * (seq2_size + 1), sizeof(int));
     int *buffer = (int*) calloc(buffer_max_size * (seq2_size + 1), sizeof(int));
+    int b_width = block_width(seq2_size + 1);
+    int b_per_proc = blocks_per_proc(seq2_size + 1, b_width);
+    int last_b_size = last_block_size(seq2_size + 1, b_width);
 
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -152,52 +180,89 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    if (me != master && block_size > 0) {
-        MPI_Recv(S, seq2_size + 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-    }
 
 
-    /*printf("me: %d, bl: %d, bs: %d\n", me, block_low, block_size);*/
-    for (i = 1, b = block_low; b < block_high + 1 && i < seq1_size + 1; i++, b++) {
-        int index = i * gap;
-        for (j = 1; j < seq2_size + 1; j++) {
-            char xi;
-            if (block_low == 0) {
-                xi = seq1[i - 1];
-            } else {
-                xi = seq1[b - 1];
-            }
-            char yj = seq2[j - 1];
-            int l_value = letter_index(C, xi);
-            int p_value = P[l_value * gap + j];
+    for(k = 0; k < b_per_proc; k++) {
+        int columns = b_width;
+        int current_column = k * columns;
 
-            int t = (0 - p_value) < 0? 1 : 0;
-            int s;
-
-            /*printf("i: %d, b: %d, p_value: %d, lol: %d\n", i, b, p_value, index - gap + p_value - 1);*/
-            if (p_value == 0) {
-                s = (0 - (S[index - gap + j] - t * S[index - gap])) < 0? 1 : 0;
-            } else {
-                s = (0 - (S[index - gap + j] - t * S[index - gap + p_value - 1])) < 0? 1 : 0;
-            }
-
-            if (xi == yj) cost(i);
-            S[index + j] = S[index - gap + j] + t * (s ^ 1);
+        if (k + 1 == b_per_proc) {
+            columns = last_b_size;
         }
-        /*print_new_matrix(S + index, 0, seq2_size);*/
-    }
+        if (me != master && block_size > 0) {
+            MPI_Recv(S + current_column, columns, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+        }
+        
+        /*printf("me: %d, bl: %d, bs: %d\n", me, block_low, block_size);*/
+        b = block_low == 0? 1 : block_low;
+        for (i = 1; b < block_high + 1 && i < seq1_size + 1; i++, b++) {
+            int index = i * gap;
+            
+            #pragma omp parallel for
+            for (j = 0; j < columns; j++) {
+                if (k != 0 || j != 0) {
+                    char xi = seq1[b - 1];
+                    int column = current_column + j;
+                    char yj = seq2[column - 1];
+                    /*printf("me %d, (i, column): (%d, %d) index - gap + column: %d yj: %c\n", me, i, column, index - gap + column, yj);*/
+                    int l_value = letter_index(C, xi);
+                    int p_value = P[l_value * gap + column];
 
-    /*printf("me: %d\n", me);
-    if (me != master) print_new_matrix(S, array_size, seq2_size);*/
-    if (block_size > 0 && block_high < seq1_size) {
-        int next = BLOCK_OWNER(block_high + 1, nprocs, seq1_size + 1);
-        MPI_Send(&S[block_size * gap], seq2_size + 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-        /*print_new_matrix(S +(block_size - 1) * gap, 0, seq2_size);*/
+                    int t = (0 - p_value) < 0? 1 : 0;
+                    int s;
+
+                    /*printf("i: %d, b: %d, p_value: %d, lol: %d\n", i, b, p_value, index - gap + p_value - 1);*/
+                    if (p_value == 0) {
+                        s = (0 - (S[index - gap + column] - t * S[index - gap])) < 0? 1 : 0;
+                    } else {
+                        s = (0 - (S[index - gap + column] - t * S[index - gap + p_value - 1])) < 0? 1 : 0;
+                    }
+
+                    if (xi == yj) cost(i);
+                    S[index + column] = S[index - gap + column] + t * (s ^ 1);
+                }
+            }
+            /*print_new_matrix(S + index, 0, seq2_size);*/
+        }
+
+        /*if (me != master) print_new_matrix(S, array_size, seq2_size);*/
+        if (block_size > 0 && block_high < seq1_size) {
+            int next = BLOCK_OWNER(block_high + 1, nprocs, seq1_size + 1);
+            if (me == master) {
+                MPI_Send(&S[block_high * gap + current_column], columns, MPI_INT, next, 0, MPI_COMM_WORLD);
+            } else {
+                MPI_Send(&S[block_size * gap + current_column], columns, MPI_INT, next, 0, MPI_COMM_WORLD);
+            }
+            /*print_new_matrix(S +(block_size - 1) * gap, 0, seq2_size);*/
+        }
     }
 
     if (me != master) {
         MPI_Send(&S[gap], array_size * (seq2_size + 1), MPI_INT, master, 0, MPI_COMM_WORLD);
     }
+
+/*
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (me == 0) {
+        printf("me: %d\n", me);
+        print_new_matrix(S, array_size, seq2_size);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (me == 1) {
+        printf("me: %d\n", me);
+        print_new_matrix(S, array_size, seq2_size);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (me == 2) {
+        printf("me: %d\n", me);
+        print_new_matrix(S, array_size, seq2_size);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (me == 3) {
+        printf("me: %d\n", me);
+        print_new_matrix(S, array_size, seq2_size);
+    }
+*/
 
     if (me == master) {
         for (i = 0; i < nprocs; i++) {
@@ -244,8 +309,8 @@ int main(int argc, char *argv[]) {
         }
 
         printf("%d\n%s\n", len, lcs);
-    }
 
+    }
 
 
     free(S);
