@@ -94,7 +94,7 @@ int main(int argc, char const *argv[]) {
         int index = i * gap;
         for (j = 1; j < seq2_size + 1; j++) {
             char xi = seq1[i - 1];
-            char yj = seq2[i - 1];
+            char yj = seq2[j - 1];
             int l_value = letter_index(C, xi);
             int p_value = P[l_value * gap + j];
 
