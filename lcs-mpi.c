@@ -3,7 +3,7 @@
 #include <mpi.h>
 #include <math.h>
 
-#define ALPHA_SIZE 4
+#define ALPHA_SIZE 26
 
 #define BLOCK_LOW(id,p,n) ((id)*(n)/(p))
 #define BLOCK_HIGH(id,p,n) (BLOCK_LOW((id)+1,p,n)-1)
@@ -25,15 +25,12 @@ void print_new_matrix(int* matrix, int size1, int size2) {
     printf("\n");
 }
 
-int letter_index(char alpha[4], char letter) {
-    int i;
-    for (i = 0; i < ALPHA_SIZE; i++) {
-        if (alpha[i] == letter) {
-            return i;
-        }
-    }
+char C(int index) {
+    return 'A' + index;
+}
 
-    return -1;
+int letter_index(char letter) {
+    return letter - 'A';
 }
 
 short cost(int x) {
@@ -47,16 +44,10 @@ short cost(int x) {
 }
 
 int block_width(int strlen) {
-    if (strlen < 50) {
-        return 3;
-    } if (strlen < 500) {
-        return 100;
-    } if (strlen < 10000) {
-        return 4000;
-    } if (strlen < 20000) {
-        return 9000;
+    if (strlen < 100) {
+        return strlen / 4;
     } else {
-        return 15000;
+        return strlen / 50;
     }
 }
 
@@ -110,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
 
-    char C[ALPHA_SIZE] = { 'A', 'C', 'G', 'T' };
+    /*char C[ALPHA_SIZE] = { 'A', 'C', 'G', 'T' };*/
     int *P;
 
     P = (int *) calloc(ALPHA_SIZE * (seq2_size + 1), sizeof(int));
@@ -132,7 +123,7 @@ int main(int argc, char *argv[]) {
     #pragma omp parallel for private(j)
     for (i = 0; i < ALPHA_SIZE; i++) {
         int index = i * gap;
-        char c = C[i];
+        char c = C(i);
         for (j = 1; j < seq2_size + 1; j++) {
             char b = seq2[j - 1];
             if (b == c) {
@@ -188,7 +179,7 @@ int main(int argc, char *argv[]) {
                     char xi = seq1[b - 1];
                     int column = current_column + j;
                     char yj = seq2[column - 1];
-                    int l_value = letter_index(C, xi);
+                    int l_value = letter_index(xi);
                     int p_value = P[l_value * gap + column];
 
                     int t = (0 - p_value) < 0? 1 : 0;
