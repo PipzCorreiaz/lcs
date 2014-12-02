@@ -156,8 +156,6 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    /*printf("me: %d, nprocs: %d, bl: %d, bh: %d, bs: %d\n", me, nprocs, block_low, block_high, block_size);*/
-
     for(k = 0; k < b_per_proc; k++) {
         int columns = b_width;
         int current_column = k * columns;
@@ -248,7 +246,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (last_cell > 0) {
+    if (me != primer) {
         lcs[0] = j;
         int previous = BLOCK_OWNER(block_low - 1, nprocs, seq1_size + 1);
         MPI_Send(&len, 1, MPI_INT, previous, 0, MPI_COMM_WORLD);
@@ -262,33 +260,11 @@ int main(int argc, char *argv[]) {
         printf("\n");
     }
 
-/*
-
-        while(last_cell > 0) {
-            int index = i * gap + j;
-            xi = seq1[i - 1];
-            yj = seq2[j - 1];
-            if (xi == yj) {
-                lcs[last_cell - 1] = xi;
-                last_cell--;
-                i--;
-                j--;
-            } else if (S[index - gap] > S[index - 1]) {
-                i--;
-            } else {
-                j--;
-            }
-        }
-
-        printf("%d\n%s\n", len, lcs);
-
-    }
-*/
-
     free(S);
     free(P);
     free(seq1);
     free(seq2);
+    free(lcs);
 
     MPI_Finalize();
 
