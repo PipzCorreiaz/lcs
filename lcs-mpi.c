@@ -10,21 +10,6 @@
 #define BLOCK_SIZE(id,p,n) (BLOCK_HIGH(id,p,n)-BLOCK_LOW(id,p,n)+1)
 #define BLOCK_OWNER(index,p,n) (((p)*((index)+1)-1)/(n))
 
-
-void print_new_matrix(int* matrix, int size1, int size2) {
-    int i, j;
-    for (i = 0; i < size1 + 1; i++) {
-        for (j = 0; j < size2 + 1; j++) {
-            int c = matrix[i * (size2 + 1) + j];
-            printf("%d", c);
-        }
-
-        printf("\n");
-    }
-
-    printf("\n");
-}
-
 char C(int index) {
     return 'A' + index;
 }
