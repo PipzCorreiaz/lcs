@@ -2,6 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define ALPHA_SIZE 26
+
+char C(int index) {
+    return 'A' + index;
+}
+
+int letter_index(char letter) {
+    return letter - 'A';
+}
+
 short cost(int x) {
     int i, n_iter = 20;
     double dcost = 0;
@@ -20,8 +30,6 @@ int main(int argc, char const *argv[]) {
     char *seq1, *seq2;
     int seq2_size = 0;
 
-    int *matrix;
-
     file = fopen(argv[1], "r");
     if (file != NULL) {
         fscanf(file, "%d %d", &seq1_size, &seq2_size);
@@ -38,7 +46,9 @@ int main(int argc, char const *argv[]) {
 
     fclose(file);
 
-    matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
+    int *P = (int *) calloc(ALPHA_SIZE * (seq2_size + 1), sizeof(int));
+
+    int *matrix = (int*) calloc((seq1_size + 1) * (seq2_size + 1), sizeof(int));
     if (matrix == NULL) {
         printf("Not enough memory. Learning how to program in C might help...\n");
         exit(-1);
@@ -46,47 +56,34 @@ int main(int argc, char const *argv[]) {
 
     int i, j;
     const int gap = seq2_size + 1;
-    const int max_diagonals = abs(seq1_size - seq2_size) + 1;
-    const int shortest_seq_size = seq1_size < seq2_size? seq1_size : seq2_size;
 
-    int k, max_j = 0, diagonals_counter = max_diagonals;
-    for (i = 1, k = 1; i < seq1_size + 1 && k < seq2_size + 1; ) {
-        if (i < shortest_seq_size) {
-            max_j = i;
-        } else {
-            if (diagonals_counter > 0) {
-                max_j = shortest_seq_size;
-                diagonals_counter--;
+    /* Compute P table */
+    for (i = 0; i < ALPHA_SIZE; i++) {
+        int index = i * gap;
+        char c = C(i);
+        for (j = 1; j < seq2_size + 1; j++) {
+            char b = seq2[j - 1];
+            if (b == c) {
+                P[index + j] = j;
             } else {
-                max_j--;
+                P[index + j] = P[index + j - 1];
             }
         }
+    }
 
-        for (j = k; j < max_j + k; j++) {
-            int u = (i - j + k);
-            int index = u * gap + j;
-            char xi = seq1[u - 1];
+    for (i = 1; i < seq1_size + 1; i++) {
+        int index = i * gap;
+        for (j = 1; j < seq2_size + 1; j++) {
+            char xi = seq1[i - 1];
             char yj = seq2[j - 1];
+            int l_value = letter_index(xi);
+            int p_value = P[l_value * gap + j];
 
-            if (xi != yj) {
-                int top_cell = matrix[index - gap];
-                int left_cell = matrix[index - 1];
+            int t = (0 - p_value) < 0? 1 : 0;
+            int s = (0 - (matrix[index - gap + j] - t * matrix[index - gap + p_value - 1])) < 0? 1 : 0;
 
-                if (top_cell > left_cell) {
-                    matrix[index] = top_cell;
-                } else {
-                    matrix[index] = left_cell;
-                }
-
-            } else {
-                matrix[index] = matrix[index - gap - 1] + cost(i);
-            }
-        }
-
-        if (i < seq1_size) {
-            i++;
-        } else {
-            k++;
+            if (xi == yj) cost(i);
+            matrix[index + j] = matrix[index - gap + j] + t * (s ^ 1);
         }
     }
 
@@ -117,6 +114,7 @@ int main(int argc, char const *argv[]) {
     printf("%d\n%s\n", len, lcs);
 
     free(matrix);
+    free(P);
     free(seq1);
     free(seq2);
 
