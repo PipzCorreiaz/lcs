@@ -12,7 +12,8 @@ omp:
 	$(CC) $(OMPFLAGS) $(CFLAGS) lcs-omp lcs-omp.c
 
 mpi:
-	$(MCC) $(CFLAGS) lcs-mpi lcs-mpi.c
+	$(MCC) $(OMPFLAGS) $(CFLAGS) lcs-mpi lcs-mpi.c
+	cp lcs-mpi /tmp/lcs-mpi-13
 
 clean:
 	rm -rf *.o lcs-serial lcs-omp lcs-mpi
